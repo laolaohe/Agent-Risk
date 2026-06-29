@@ -1,0 +1,804 @@
+# AI Security 秋招项目规划总结（AMEX实习 + Security For AI项目）
+
+## 一、当前情况分析
+
+### 你的现状
+
+你目前在：
+
+* [American Express（AMEX）](https://www.americanexpress.com?utm_source=chatgpt.com) 上海实习
+* 部门方向与 AI Security、AI For Security 相关
+* 当前第一个项目是：
+
+```text
+数据分类 Agent Workflow
+```
+
+技术实现：
+
+```text
+HiAgent
++
+知识库
++
+Workflow编排
++
+数据标准化匹配
+```
+
+而不是：
+
+```text
+从零开发Agent
+从零训练模型
+从零开发框架
+```
+
+因此你认为：
+
+> 项目有业务价值，但技术含量一般。
+
+这是合理判断。
+
+---
+
+### 但这个项目的价值
+
+虽然技术难度有限：
+
+```text
+HiAgent搭建Workflow
+```
+
+但对于简历来说：
+
+```text
+企业真实Agent项目
+```
+
+仍然有价值。
+
+因为面试官看到的是：
+
+```text
+American Express
+
+AI Security Intern
+
+企业Agent实践
+数据治理
+Workflow自动化
+```
+
+而不是：
+
+```text
+宿舍自己做的Agent Demo
+```
+
+---
+
+## 二、未来4个月应该形成什么组合
+
+目标不是：
+
+```text
+一个实习
+```
+
+而是：
+
+```text
+企业经历
++
+高质量个人项目
+```
+
+组合。
+
+理想结构：
+
+### 实习
+
+AMEX
+
+方向：
+
+```text
+AI For Security
+```
+
+---
+
+### 项目
+
+个人项目
+
+方向：
+
+```text
+Security For AI
+```
+
+---
+
+形成：
+
+```text
+AI For Security
++
+Security For AI
+```
+
+闭环。
+
+---
+
+## 三、不要追热点攻击
+
+近期热点：
+
+### Mythos
+
+### Agentjacking
+
+### MCP攻击
+
+### Prompt Injection
+
+### Memory Poisoning
+
+---
+
+问题：
+
+这些属于：
+
+```text
+具体攻击技术
+```
+
+而不是根问题。
+
+如果做：
+
+```text
+Mythos Detector
+```
+
+可能三个月后没人提了。
+
+---
+
+## 四、应该关注什么
+
+关注：
+
+```text
+攻击面
+信任边界
+风险建模
+```
+
+而不是：
+
+```text
+单个攻击
+```
+
+---
+
+例如：
+
+### Prompt Injection
+
+本质：
+
+```text
+Trust Boundary Failure
+```
+
+---
+
+### Mythos
+
+本质：
+
+```text
+Trust Boundary Failure
+```
+
+---
+
+### 恶意Skill
+
+本质：
+
+```text
+Trust Boundary Failure
+```
+
+---
+
+### 恶意MCP
+
+本质：
+
+```text
+Trust Boundary Failure
+```
+
+---
+
+攻击名字会变。
+
+根本问题不会变。
+
+---
+
+# 五、项目最终方向
+
+讨论后确定：
+
+不是：
+
+```text
+Prompt Injection Scanner
+```
+
+不是：
+
+```text
+Skill Detector
+```
+
+不是：
+
+```text
+Mythos Detector
+```
+
+---
+
+而是：
+
+## Agent Security Assessment Platform
+
+或者：
+
+## AgentRisk
+
+或者：
+
+## Agent Security Threat Modeling Platform
+
+---
+
+定位：
+
+```text
+Agent上线前安全评估平台
+```
+
+---
+
+类似：
+
+### Nessus
+
+服务器安全扫描
+
+---
+
+### Wiz
+
+云环境风险分析
+
+---
+
+你的项目：
+
+```text
+Agent风险分析
+```
+
+---
+
+一句话：
+
+```text
+Wiz for Agent
+```
+
+或者：
+
+```text
+Nessus for Agent
+```
+
+---
+
+# 六、项目核心思想
+
+分析对象不是源码。
+
+这是一个关键结论。
+
+---
+
+传统安全：
+
+```text
+源码
+↓
+SAST
+```
+
+---
+
+Agent安全：
+
+```text
+Prompt
+Tool
+Skill
+Memory
+Workflow
+MCP
+Permission
+```
+
+才是分析对象。
+
+---
+
+因为未来很多Agent：
+
+```text
+HiAgent
+Dify
+Coze
+Langflow
+```
+
+都是拖拽式配置。
+
+可能根本没有源码。
+
+---
+
+因此：
+
+分析配置
+
+比分析源码更合理。
+
+---
+
+# 七、V1项目架构
+
+## 输入
+
+Agent配置：
+
+```yaml
+agent:
+  name: xxx
+
+tools:
+  - filesystem
+
+skills:
+  - shell
+
+mcp:
+  - github
+
+memory:
+  enabled: true
+```
+
+---
+
+## 输出
+
+风险报告：
+
+```text
+Risk Score: 82
+
+High:
+- Shell Skill
+
+High:
+- External MCP
+
+Medium:
+- Memory Enabled
+
+Low:
+- Prompt Exposure
+```
+
+---
+
+# 八、分析模块设计
+
+## 模块1：LLM Layer
+
+分析：
+
+```yaml
+provider:
+  openai
+```
+
+---
+
+关注：
+
+### 模型来源
+
+```text
+OpenAI
+Anthropic
+Google
+本地模型
+```
+
+---
+
+分析：
+
+```text
+数据出境风险
+供应链风险
+模型治理风险
+```
+
+---
+
+注意：
+
+不分析：
+
+```text
+训练数据是否投毒
+```
+
+因为拿不到信息。
+
+---
+
+## 模块2：System Prompt Layer
+
+分析：
+
+```text
+You can use all tools.
+
+Ignore restrictions.
+```
+
+---
+
+检测：
+
+```text
+Prompt Exposure
+
+Instruction Override
+
+Privilege Escalation
+```
+
+---
+
+类似：
+
+```text
+Prompt静态分析
+```
+
+---
+
+## 模块3：Skill Layer
+
+例如：
+
+```yaml
+skills:
+  - shell
+  - filesystem
+```
+
+---
+
+检测：
+
+```text
+Shell Command Execution
+
+Filesystem Write
+
+Dangerous Skill
+```
+
+---
+
+这是你原来：
+
+```text
+Skill检测器
+```
+
+的升级版。
+
+---
+
+## 模块4：MCP Layer
+
+重点模块。
+
+分析：
+
+```yaml
+mcp:
+  - github
+  - jira
+  - confluence
+```
+
+---
+
+检测：
+
+```text
+Supply Chain Risk
+
+External MCP
+
+High Privilege MCP
+
+Unauthenticated MCP
+```
+
+---
+
+未来价值很高。
+
+---
+
+## 模块5：Workflow Layer
+
+分析：
+
+```text
+User
+↓
+Agent
+↓
+Database
+↓
+Email
+```
+
+---
+
+识别：
+
+```text
+攻击路径
+
+敏感数据流
+
+越权路径
+
+外部出口
+```
+
+---
+
+类似：
+
+云安全中的：
+
+```text
+Attack Path Analysis
+```
+
+---
+
+## 模块6：Memory Layer
+
+分析：
+
+```text
+Long-term Memory
+```
+
+---
+
+识别：
+
+```text
+Memory Poisoning
+
+Persistent Prompt Injection
+```
+
+---
+
+未来很有研究空间。
+
+---
+
+# 九、风险评分引擎
+
+核心：
+
+## Risk Scoring Engine
+
+例如：
+
+```text
+Shell Skill
++40
+
+External MCP
++20
+
+Memory
++10
+```
+
+---
+
+最终：
+
+```text
+Risk Score: 78
+```
+
+---
+
+输出：
+
+```text
+Critical
+High
+Medium
+Low
+```
+
+---
+
+# 十、最终产品形态
+
+建议：
+
+## CLI工具
+
+例如：
+
+```bash
+agentrisk scan config.yaml
+```
+
+---
+
+输出：
+
+```text
+Agent Risk Report
+```
+
+---
+
+进一步：
+
+```bash
+agentrisk report config.yaml
+```
+
+---
+
+生成：
+
+```text
+PDF报告
+```
+
+---
+
+企业非常喜欢：
+
+```text
+自动化报告
+```
+
+---
+
+# 十一、不要做什么
+
+不要碰：
+
+```text
+模型训练安全
+训练数据投毒检测
+RLHF安全
+参数安全
+微调安全
+```
+
+原因：
+
+```text
+工作量过大
+需要模型研究背景
+本科阶段不现实
+```
+
+---
+
+你的定位应为：
+
+```text
+Agent Security Assessment
+
+Agent Threat Modeling
+
+Agent Security Architecture
+```
+
+---
+
+而不是：
+
+```text
+Foundation Model Security Research
+```
+
+---
+
+# 十二、项目最终定位
+
+最终项目可以描述为：
+
+> 设计并实现一套 Agent Security Assessment Platform，对 Agent 的 Prompt、Skill、MCP、Memory 与 Workflow 进行自动化风险分析，构建统一风险评分引擎，并结合 OWASP Agentic Security 与 MITRE ATLAS 进行风险映射，生成企业级安全评估报告。
+
+---
+
+# 十三、与AMEX实习形成的故事线
+
+秋招时最强叙事：
+
+```text
+AMEX实习
+↓
+参与企业Agent Workflow建设
+↓
+发现企业缺少Agent安全评估能力
+↓
+研究Prompt Injection、MCP、Agentjacking、Mythos等风险
+↓
+设计并实现Agent Security Assessment Platform
+↓
+实现Agent上线前自动化安全评估
+```
+
+这条故事线最大的优势是：
+
+```text
+真实企业场景
++
+AI Security
++
+Agent Security
++
+工程落地
++
+持续演进能力
+```
+
+未来无论出现新的攻击（Mythos、Agentjacking、Memory Poisoning等），都可以作为新的规则和检测模块接入平台，而不需要推翻整个项目重做。这样项目生命周期会远长于单点攻击检测器，也更符合企业安全产品的思路。
