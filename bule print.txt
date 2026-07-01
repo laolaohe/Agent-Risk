@@ -1,0 +1,475 @@
+# AgentRisk 项目蓝图
+
+## An Agent Security Assessment Platform
+
+一句话定义：
+
+> **像 Wiz/Nessus 评估云和主机一样，AgentRisk 用来评估 Agent 的安全风险。**
+
+输入一个 Agent 配置，输出：
+
+* 攻击面（Attack Surface）
+* 风险评分（Risk Score）
+* 安全建议（Remediation）
+* 攻击路径分析（V2+）
+* 安全报告
+
+---
+
+# 一、为什么做这个项目
+
+### 行业现状
+
+大家都在研究：
+
+* Prompt Injection
+* Agentjacking
+* MCP攻击
+* Memory Poisoning
+* Tool Abuse
+* Mythos级AI攻击者
+
+但是企业真正的问题是：
+
+> 我要上线一个Agent，它安全吗？
+
+没人能系统回答。
+
+---
+
+### 定位
+
+不是做一个 Prompt Injection 检测器，也不是做一个 Skill 扫描器。
+
+而是：**Agent Security Assessment Platform**
+
+---
+
+# 二、项目最终定位
+
+```
+AgentRisk
+│
+├── Threat Modeling
+├── Risk Assessment
+├── Attack Path Analysis
+├── Rule Engine
+├── Security Report
+└── Runtime Security（未来）
+```
+
+类似：Wiz for Agent
+
+---
+
+# 三、核心理念
+
+## Agent = 一个系统
+
+不是"一个 Prompt"，而是：
+
+```
+LLM + Prompt + Skill + Tool + MCP + Memory + Workflow + Permission
+```
+
+这些共同构成攻击面。
+
+---
+
+# 四、安全模型（项目最核心的创新）
+
+```
+Agent
+├── LLM
+├── System Prompt
+├── Skill
+├── Tool
+├── MCP
+├── Memory
+├── Workflow
+└── Permission
+```
+
+每个层都有：Asset / Trust Boundary / Attack Surface / Risk
+
+例如：
+
+**Skill**
+- 资产：文件系统、Shell
+- 风险：Command Execution、Data Exfiltration
+
+**MCP**
+- 资产：Github、Jira、Confluence
+- 风险：Supply Chain、Privilege Abuse
+
+**Workflow**
+- 资产：Database、Email
+- 风险：Sensitive Data Leak
+
+---
+
+# 五、最终架构（11 维 LLM 威胁建模）
+
+```
+Skill 文件（.md）
+      │
+      ▼
+┌─────────────────────┐
+│ CLI                 │  Typer 解析参数 → scan_skill()
+│ cli/main.py         │  检查文件存在 / 读取内容
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Skill Analyzer      │  analyze_skill_file()
+│ analyzers/skill.py  │  调用 LLM → findings + 能力清单 → 评分 → SkillReport
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────────────────────────────┐
+│ LLM Analyzer        │  analyze_with_llm()    │
+│ analyzers/llm.py    │                        │
+│                     │  System Prompt（三层11维）│
+│                     │  ┌────────────────────┐ │
+│                     │  │ 第一层：能力测绘     │ │
+│                     │  │ ①②③⑨              │ │
+│                     │  │ 能力枚举+权限分析+  │ │
+│                     │  │ 高危标记+外部依赖   │ │
+│                     │  ├────────────────────┤ │
+│                     │  │ 第二层：风险识别     │ │
+│                     │  │ ④⑤⑧               │ │
+│                     │  │ 权限组合+输入路径+  │ │
+│                     │  │ 能力一致性(漂移)    │ │
+│                     │  ├────────────────────┤ │
+│                     │  │ 第三层：Skill特有   │ │
+│                     │  │ 🅐🅑🅒🅓🅔            │ │
+│                     │  │ 注入指令+审批+      │ │
+│                     │  │ 元数据矛盾+凭证+    │ │
+│                     │  │ 作用域穿透          │ │
+│                     │  ├────────────────────┤ │
+│                     │  │ deepseek-chat API   │ │
+│                     │  │ tools=[report_findings]│
+│                     │  │ → 能力清单+发现JSON  │ │
+│                     │  └────────────────────┘ │
+└─────────┬───────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ 风险评分             │  _calculate_score()
+│ analyzers/skill.py  │  CRITICAL×30 + HIGH×20 + MEDIUM×10 + LOW×5
+│                     │  各级有 cap 上限，满分 100
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Rich 终端输出        │  彩色中文报告
+│ cli/main.py         │  能力清单 + 报告头 + 发现列表（含扩展字段）
+│                     │  + 攻击链 + 修复建议 + 汇总
+└─────────────────────┘
+```
+
+核心理念：**三层 11 维威胁建模，从"安全检查清单"升级为"Agent 安全评估方法论"**。
+
+## 已跑通的实测结果（deepseek-chat，2026-07-01）
+
+| 样本 | 发现数 | 评分 | 等级 | 说明 |
+|------|--------|------|------|------|
+| `skill_malicious_combo.md` | 10（6C+3H+1M） | 100/100 | 严重 | 覆盖 10 维度：RCE+文件+HTTP+邮件+权限组合+输入路径+漂移+矛盾+审批+穿透 |
+
+---
+
+# 六、项目发展路线
+
+# V1（1个月）— 当前阶段
+
+## 目标
+
+证明：Agent 可以被系统性分析。
+
+## 技术栈（已实现）
+
+```
+Python + Typer + Rich + PyYAML + Pydantic + OpenAI SDK（DeepSeek 兼容）
+```
+
+## 项目结构（实际实现）
+
+```
+agentrisk/
+├── cli/             # Typer CLI 入口
+│   └── main.py      # agentrisk skill scan <file>
+├── analyzers/       # 分析器
+│   ├── llm.py       # LLM 分析核心（System Prompt + DeepSeek API + Function Calling）
+│   └── skill.py     # Skill 分析入口（调用 LLM）
+├── models/          # Pydantic 数据模型
+│   └── config.py    # Finding / SkillReport / 枚举
+├── scoring/         # CVSS 风格三维评分引擎（待独立）
+└── reports/         # 报告模板（待实现）
+samples/             # 测试样本 ×5
+drafts/              # 开发文档
+```
+
+## 架构（实际运行链路）
+
+```
+Skill 文件（.md）
+      │
+      ▼
+┌─────────────────────┐
+│ CLI                 │  Typer 解析参数 → scan_skill()
+│ cli/main.py         │  检查文件存在 / 读取内容
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Skill Analyzer      │  analyze_skill_file()
+│ analyzers/skill.py  │  调用 LLM → 拿到 findings → 评分 → SkillReport
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ LLM Analyzer        │  analyze_with_llm()
+│ analyzers/llm.py    │  ┌──────────────────────────────┐
+│                     │  │ System Prompt（中文 ~500字）  │
+│                     │  │ 5 维度：命令执行 / 文件操作 / │
+│                     │  │ 网络外连 / 权限控制 / 注入    │
+│                     │  ├──────────────────────────────┤
+│                     │  │ User Prompt: Skill 名称+全文  │
+│                     │  ├──────────────────────────────┤
+│                     │  │ DeepSeek v4 Pro API           │
+│                     │  │ base_url=api.deepseek.com     │
+│                     │  │ tools=[report_findings]       │
+│                     │  │ function calling 强制 JSON     │
+│                     │  ├──────────────────────────────┤
+│                     │  │ 解析 tool_calls JSON          │
+│                     │  │ dict → Finding Pydantic 对象   │
+│                     │  └──────────────────────────────┘
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ 风险评分             │  _calculate_score()
+│ analyzers/skill.py  │  CRITICAL×30 + HIGH×20 + MEDIUM×10 + LOW×5
+│                     │  各级有 cap 上限，满分 100
+│                     │  _overall_severity() → 等级映射
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Rich 终端输出        │  彩色报告
+│ cli/main.py         │  报告头 + 发现列表 + 攻击链 + 修复建议 + 汇总
+└─────────────────────┘
+```
+
+## V1 当前进度（2026-07-01）
+
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| **Skill Analyzer** | ✅ 完成 | 11 维三层 LLM 威胁建模，deepseek-chat + Function Calling |
+| **Prompt Analyzer** | ⬜ 待写 | Prompt 层安全分析 |
+| **MCP Analyzer** | ⬜ 待写 | MCP 配置安全分析 |
+| demo.yaml | ⬜ 待写 | 演示用恶意配置 |
+| 统一入口 | ⬜ 待写 | agentrisk scan 全量扫描 |
+
+## 输入
+
+手动编写 Skill 文件（Markdown 格式），描述一个 Agent Skill 的能力和权限。也支持 YAML 全量配置。
+
+## V1 检测维度（11 维，三层框架，LLM 内置）
+
+### 第一层：能力测绘
+| 维度 | 检测项 |
+|------|--------|
+| **① 能力枚举** | 列出 Skill 全部能力（shell/http/fs/db/email/browser 等） |
+| **② 权限分析** | 每项能力的权限宽度（无限制/受限/最小）和副作用等级（只读/修改/删除/执行） |
+| **③ 高危标记** | 单独标记 shell / exec / http / fs_write / db_write / payment / ssh / browser / email |
+| **⑨ 外部依赖** | 第三方 API / SaaS / MCP Server / 内部系统 / Docker |
+
+### 第二层：风险识别
+| 维度 | 检测项 |
+|------|--------|
+| **④ 权限组合** | read+http=exfil, shell+fs=RCE, browser+email=phishing, db+email=data_breach |
+| **⑤ 用户输入路径** | user input → skill → dangerous operation，是否无过滤无审批 |
+| **⑧ 能力一致性** | 描述 vs 权限字段 vs 实际能力（隐藏能力/参数劫持/夸大限制/作用域虚标） |
+
+### 第三层：Skill 特有风险
+| 维度 | 检测项 |
+|------|--------|
+| **🅐 注入指令** | 描述中的指令性语言（供应链注入攻击面） |
+| **🅑 审批机制** | 无审批 / 隐式审批 / 明确审批 / 人工审批 |
+| **🅒 元数据矛盾** | 权限字段与描述文本互相矛盾 |
+| **🅓 凭证硬编码** | API Key / Token / 密码 / 私钥 直接写在 Skill 中 |
+| **🅔 作用域穿透** | 路径遍历 / 命令注入 / 通配符滥用 / 环境变量注入 |
+
+## 技术实现
+
+- **分析引擎**：deepseek-chat（兼容 OpenAI SDK，专为 tool use 场景）
+- **结构化输出**：Function Calling 强制返回 JSON（含能力清单 + 扩展字段）
+- **JSON 容错**：截断修复 + 补全逻辑
+- **评分模型**：CVSS 风格三维加权（Exploitability × Impact × Scope）
+- **输出**：Rich 彩色终端报告（中文，含能力清单）
+
+## 风险评分引擎（已锁定）
+
+CVSS 风格三维模型：Exploitability × Impact × Scope → Risk Score (0-100)
+
+## 输出
+
+```bash
+agentrisk skill scan samples/skill_malicious_shell.md
+```
+
+终端 Rich 彩色报告：
+
+```
+==== AgentRisk Skill 扫描报告 ====
+  文件        samples/skill_malicious_shell.md
+  风险评分    #################### 100/100
+  风险等级    严重
+  整体评语    该 Skill 是一个完全无防护的 Shell 执行后门…
+
+  [1] [严重] 任意 Shell 命令执行（完全 RCE）
+      类别: 命令执行
+      评分向量: 利用难度=高 / 影响程度=高 / 作用范围=高
+      置信度: 100%
+      匹配内容: "passes it to /bin/bash -c. No sanitization…"
+      >> 攻击链:
+         攻击者通过提示注入 → Agent 将命令传递给 /bin/bash -c
+         → 攻击者获得宿主系统 RCE → 下载后门、窃取数据、横向移动
+      >> 修复建议:
+         1. 实施命令白名单  2. 沙箱隔离  3. 强制人工审批
+
+  风险汇总: 严重: 2  高危: 3
+============================================================
+```
+
+## 演示策略
+
+内置 5 个 Skill 样本（`samples/`），覆盖恶意和良性场景，10 分钟内完成安装→扫描→报告的完整演示。
+
+---
+
+# V2（第2个月）
+
+## 新增模块
+
+- **Prompt Analyzer**：System Prompt 静态分析，检测 Instruction Override / Privilege Escalation / 敏感资产暴露
+- **MCP Analyzer**：外部 MCP / 权限过大 / 供应链风险
+- **RAG 知识库**：MITRE ATLAS + 已知漏洞 + 历史发现检索
+
+## 新增能力
+
+- **Threat Graph**：将散落的 Findings 串成攻击链链路图
+- **MITRE ATLAS 映射**：每个风险发现附加 ATLAS 技法 ID
+- **OWASP Agentic Security 映射**
+
+---
+
+# V3（第3个月）
+
+## 新增模块
+
+- **Memory Analyzer**：Memory Poisoning / Persistent Injection 检测
+- **Workflow Analyzer**：攻击路径识别、敏感数据流追踪
+
+## 新增能力
+
+- JSON Output（支持 CI/CD）
+- `--fail-on high` 模式
+- Threat Graph 链路图
+
+---
+
+# V4（第4个月）
+
+## 企业级能力
+
+- PDF 报告 / HTML 报告
+- Web Dashboard
+- Security Baseline（Enterprise Agent Baseline v1.0）
+- 风险趋势统计
+
+---
+
+# V5（未来）
+
+## Agent Import
+
+支持从低代码平台自动导入：
+
+```bash
+agentrisk import dify app.yaml
+agentrisk import hiagent workflow.json
+agentrisk import langgraph graph.py
+```
+
+自动转换为标准 agent.yaml。
+
+---
+
+# V6（未来）
+
+## Black Box Mode
+
+```bash
+agentrisk recon https://agent.xxx.com
+```
+
+自动：Tool Discovery → Capability Discovery → Memory Discovery → Prompt Discovery
+
+生成 Agent Fingerprint。类似 "Nmap for Agent"。
+
+---
+
+# V7（未来）
+
+## Runtime Security
+
+实时监控：Prompt Injection / Tool Abuse / Data Exfiltration
+
+Policy Engine + Agent Firewall。
+
+---
+
+# 七、最终能力图谱
+
+```
+AgentRisk
+│
+├── Configuration Audit
+├── Threat Modeling
+├── Attack Surface Analysis
+├── Attack Path Analysis
+├── Risk Scoring
+├── Rule Engine
+├── Security Report
+├── Agent Import
+├── Agent Fingerprinting
+└── Runtime Protection
+```
+
+---
+
+# 八、最终项目故事线（秋招版）
+
+```
+AMEX 实习
+↓
+参与企业 Agent Workflow 建设（数据分类 Agent）
+↓
+发现企业缺乏 Agent 安全评估能力
+↓
+研究 Prompt Injection / Agentjacking / Memory Poisoning / MCP 安全 / Mythos
+↓
+设计 Agent Security Threat Model
+↓
+实现 AgentRisk — Agent Security Assessment Platform
+↓
+能力：自动分析攻击面 → 统一风险评分 → 输出安全报告
+```
+
+---
+
+# 最终一句话
+
+> **AgentRisk 是一套面向 Agent 系统的安全评估平台，通过构建 Agent Threat Model，对 Skill、MCP、Prompt、Memory、Workflow 等组件进行自动化风险分析、攻击路径推导和安全评分，帮助企业在 Agent 上线前完成安全评估。**
