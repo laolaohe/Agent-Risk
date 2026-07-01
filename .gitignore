@@ -1,2 +1,27 @@
 # MCP config - contains credentials
 .mcp.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Personal notes - do not upload
+bule print.txt
+drafts/
+samples/
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
